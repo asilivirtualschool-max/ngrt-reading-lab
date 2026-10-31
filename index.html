@@ -3419,6 +3419,8 @@ function labSetPanelHTML(s, doc) {
    To share one platform across many devices (teacher laptop + student iPads), paste your Firebase
    web config here, or in Settings > Storage on each device. Leave null to keep data on this device only. */
 const FIREBASE_CONFIG = null; // e.g. { apiKey:"…", authDomain:"…", projectId:"…", appId:"…" }
+/* Copies hosted elsewhere (e.g. GitHub Pages) read the shared database settings from the Firebase site. */
+const FIREBASE_CONFIG_URL = "https://ngrt-reading-lab.web.app/config.json";
 const FB_PREFIX = "ngrt_";
 const IN_ARTIFACT = typeof window !== "undefined" && !!window.claude;
 const CAN_PRINT = !IN_ARTIFACT;
@@ -3435,7 +3437,14 @@ const Store = {
   key: "ngrt_platform_v1",
   async init() {
     COLS.forEach(c => this.cache[c] = {});
-    const cfg = FIREBASE_CONFIG || lsGet("ngrt_fb_cfg");
+    let cfg = FIREBASE_CONFIG || lsGet("ngrt_fb_cfg");
+    if (!cfg && FIREBASE_CONFIG_URL && !IN_ARTIFACT && /^https?:$/.test(location.protocol)) {
+      try {
+        const ac = new AbortController(), t = setTimeout(() => ac.abort(), 5000);
+        const r = await fetch(FIREBASE_CONFIG_URL, { cache: "no-store", signal: ac.signal }); clearTimeout(t);
+        if (r.ok) { const j = await r.json(); if (j && j.projectId) cfg = j; }
+      } catch (e) { console.warn("No shared database settings found", e); }
+    }
     if (cfg) {
       try { await this.initFirebase(cfg); this.mode = "firebase"; return; }
       catch (e) { this.error = "Could not connect to Firebase (" + (e.message || e) + "). Using this device's storage."; console.warn(e); }

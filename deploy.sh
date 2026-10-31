@@ -26,7 +26,8 @@ h=h.replace(/const FIREBASE_CONFIG = (null|\{[^\n]*?\});/, "const FIREBASE_CONFI
 fs.writeFileSync("public/index.html",h); fs.writeFileSync("public/config.json",JSON.stringify(cfg));
 console.log("CONFIG "+JSON.stringify(cfg));'
 cat > firebase.json <<'EOF'
-{ "hosting": { "public": "public", "ignore": ["**/.*"], "headers": [{ "source": "**/*.html", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }] },
+{ "hosting": { "public": "public", "ignore": ["**/.*"], "headers": [{ "source": "**/*.html", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+  { "source": "/config.json", "headers": [{ "key": "Access-Control-Allow-Origin", "value": "*" }, { "key": "Cache-Control", "value": "no-cache" }] }] },
   "firestore": { "rules": "firestore.rules" } }
 EOF
 cat > firestore.rules <<'EOF'
